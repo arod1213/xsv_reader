@@ -22,6 +22,6 @@ pub fn strMapToJson(alloc: Allocator, map: *const std.StringHashMap([]const u8))
 }
 
 pub fn getMap(alloc: Allocator, headers: [][]const u8, line: []const u8, sep: u8) !std.StringHashMap([]const u8) {
-    var data = try getFields(alloc, line, sep);
-    return try link.linkHeaders(alloc, headers, &data);
+    const data = try getFields(alloc, line, sep);
+    return try link.linkHeaders(alloc, headers, data);
 }
