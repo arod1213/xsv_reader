@@ -5,6 +5,7 @@ const assert = std.debug.assert;
 const expect = std.testing.expect;
 const array = std.ArrayList;
 const log = std.log;
+const StructField = std.builtin.Type.StructField;
 
 const collect = @import("./collect.zig");
 const types = @import("./types.zig");
@@ -24,6 +25,44 @@ pub fn stringify(writer: *std.Io.Writer, json_obj: *const json.Value, oneLine: b
         _ = try std.json.Stringify.value(json_obj, .{ .whitespace = .indent_1 }, writer);
     }
     _ = try writer.write("\n");
+}
+
+fn parseValue(comptime T: type, val: []const u8) !T {
+    const info = @typeInfo(T);
+    return try switch (info) {
+        .int => std.fmt.parseInt(T, val, 10),
+        .float => std.fmt.parseFloat(T, val),
+        .bool => if (std.ascii.eqlIgnoreCase("true", val)) true else if (std.ascii.eqlIgnoreCase("false", val)) false else error.InvalidBoolean,
+        // TODO: implement more types here
+        else => unreachable,
+    };
+}
+
+pub fn lineToStruct(comptime T: type, line: *const std.StringHashMap([]const u8)) !T {
+    const info = @typeInfo(T);
+    assert(info == .@"struct");
+    switch (info) {
+        .@"struct" => |s| {
+            var result: T = undefined;
+            inline for (s.fields) |field| {
+                const value_str = line.get(field.name) orelse {
+                    if (field.default_value_ptr) |default| {
+                        @field(result, field.name) = default.*;
+                        continue;
+                    }
+                    return error.MissingField;
+                };
+
+                const parsed = parseValue(field.type, value_str) catch {
+                    return error.InvalidField;
+                };
+                @field(result, field.name) = parsed;
+            }
+            return result;
+        },
+        else => unreachable,
+    }
+    return error.InvalidInfo;
 }
 
 pub const CSVReader = struct {
