@@ -1,0 +1,8 @@
+*.csv
+*.tsv
+*.json
+
+*.DS_Store
+
+zig-out/
+.zig-cache/
