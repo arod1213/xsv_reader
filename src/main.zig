@@ -17,14 +17,12 @@ pub fn main() !void {
 
     const config = xsv_reader.Args{};
     var xsv = try xsv_reader.CSVReader.init(alloc, &reader.interface, &config);
-    std.log.info("header is {d} ", .{xsv.headers.len});
+
     while (true) {
-        const x = xsv.next(alloc) catch break;
+        const line_map = xsv.next(alloc) catch break;
+        const json_obj = try xsv_reader.mapToJson([]const u8, alloc, &line_map);
 
-        const obj = try xsv_reader.strMapToJson(alloc, &x);
-        const json_obj = std.json.Value{ .object = obj };
-
-        try xsv_reader.stringify(&writer.interface, &json_obj, false);
+        try xsv_reader.stringify(&writer.interface, &json_obj, true);
         try writer.interface.flush();
     }
 }

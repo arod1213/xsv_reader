@@ -9,7 +9,13 @@ const log = std.log;
 const collect = @import("./collect.zig");
 const types = @import("./types.zig");
 const config = @import("./config.zig");
-const link = @import("./link.zig");
+
+pub const Args = config.Args;
+pub const ReadType = config.ReadType;
+pub const mapToJson = collect.mapToJson;
+pub const mapToJsonObject = collect.mapToJsonObject;
+pub const saveTypes = types.saveTypes;
+pub const flattenTypeMap = types.flattenTypeMap;
 
 pub fn stringify(writer: *std.Io.Writer, json_obj: *const json.Value, oneLine: bool) !void {
     if (oneLine) {
@@ -17,14 +23,8 @@ pub fn stringify(writer: *std.Io.Writer, json_obj: *const json.Value, oneLine: b
     } else {
         _ = try std.json.Stringify.value(json_obj, .{ .whitespace = .indent_1 }, writer);
     }
+    _ = try writer.write("\n");
 }
-
-pub const Args = config.Args;
-pub const ReadType = config.ReadType;
-pub const strMapToJson = collect.strMapToJson;
-pub const mapToObject = link.mapToObject;
-pub const saveTypes = types.saveTypes;
-pub const flattenTypeMap = types.flattenTypeMap;
 
 pub const CSVReader = struct {
     config: *const config.Args,
