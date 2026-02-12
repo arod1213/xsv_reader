@@ -54,7 +54,7 @@ pub const CSVReader = struct {
         };
     }
 
-    pub fn skipLine(self: *Self) void {
+    pub fn skipLine(self: *Self) !void {
         _ = try self.reader.takeDelimiter('\n');
         self.line_count += 1;
     }
@@ -64,7 +64,7 @@ pub const CSVReader = struct {
 
         while (self.line_count <= self.config.offset) {
             log.debug("skipping line\n", .{});
-            self.skipLine();
+            try self.skipLine();
         }
 
         const raw = try self.reader.takeDelimiter('\n');
