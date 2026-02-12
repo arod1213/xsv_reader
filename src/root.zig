@@ -29,13 +29,38 @@ pub fn stringify(writer: *std.Io.Writer, json_obj: *const json.Value, oneLine: b
 
 fn parseValue(comptime T: type, val: []const u8) !T {
     const info = @typeInfo(T);
+
+    // TODO: fix this
+    if (T == []const u8) {
+        return val;
+    }
     return try switch (info) {
         .int => std.fmt.parseInt(T, val, 10),
         .float => std.fmt.parseFloat(T, val),
         .bool => if (std.ascii.eqlIgnoreCase("true", val)) true else if (std.ascii.eqlIgnoreCase("false", val)) false else error.InvalidBoolean,
+        .optional => |opt| {
+            if (std.ascii.eqlIgnoreCase("null", val) or val.len == 0) {
+                return null;
+            }
+            return try parseValue(opt.child, val);
+        },
+
+        .@"enum" => {
+            const enum_val = std.meta.stringToEnum(T, val) orelse return error.InvalidEnumValue;
+            return enum_val;
+        },
         // TODO: implement more types here
         else => unreachable,
     };
+}
+
+fn defaultOrErr(comptime T: type, field: StructField) !T {
+    if (field.default_value_ptr) |default| {
+        const cast_val: *const field.type = @ptrCast(default);
+        return cast_val.*;
+    } else {
+        return error.MissingField;
+    }
 }
 
 pub fn lineToStruct(comptime T: type, line: *const std.StringHashMap([]const u8)) !T {
@@ -45,18 +70,17 @@ pub fn lineToStruct(comptime T: type, line: *const std.StringHashMap([]const u8)
         .@"struct" => |s| {
             var result: T = undefined;
             inline for (s.fields) |field| {
-                const value_str = line.get(field.name) orelse {
-                    if (field.default_value_ptr) |default| {
-                        @field(result, field.name) = default.*;
-                        continue;
-                    }
-                    return error.MissingField;
-                };
-
-                const parsed = parseValue(field.type, value_str) catch {
-                    return error.InvalidField;
-                };
-                @field(result, field.name) = parsed;
+                const value_str = line.get(field.name);
+                if (value_str) |v| {
+                    const parsed = parseValue(field.type, v) catch blk: {
+                        const parsed_val = try defaultOrErr(field.type, field);
+                        break :blk parsed_val;
+                    };
+                    @field(result, field.name) = parsed;
+                } else {
+                    const parsed_val = try defaultOrErr(field.type, field);
+                    @field(result, field.name) = parsed_val;
+                }
             }
             return result;
         },
