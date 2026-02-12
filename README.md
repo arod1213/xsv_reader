@@ -1,3 +1,6 @@
+** Example Usage **
+```zig
+```zig
 const std = @import("std");
 const xsv_reader = @import("xsv_reader");
 
@@ -28,3 +31,9 @@ pub fn main() !void {
         try writer.interface.flush();
     }
 }
+```
+```
+```
+```
+``` 
+```

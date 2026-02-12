@@ -80,7 +80,7 @@ pub fn inSlice(haystack: [][]const u8, needle: []const u8) bool {
     return false;
 }
 
-fn storeInfo(alloc: Allocator, val: []const u8, existing: *std.ArrayList([]const u8)) !void {
+fn storeInfo(alloc: Allocator, val: anytype, existing: *std.ArrayList(@TypeOf(val))) !void {
     const exists = inSlice(existing.items, val);
     if (!exists) {
         try existing.append(alloc, val);
