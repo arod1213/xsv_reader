@@ -1,5 +1,5 @@
 
-** Example Usage **
+# Example Usage
 ```zig
 const std = @import("std");
 const xsv_reader = @import("xsv_reader");
