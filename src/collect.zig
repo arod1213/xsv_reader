@@ -18,7 +18,7 @@ pub fn getFields(alloc: Allocator, line: []const u8, sep: u8) ![][]const u8 {
 }
 
 pub fn strMapToJson(alloc: Allocator, map: *const std.StringHashMap([]const u8)) !std.json.ObjectMap {
-    return try link.mapToObject([]const u8, alloc, &map);
+    return try link.mapToObject([]const u8, alloc, map);
 }
 
 pub fn getMap(alloc: Allocator, headers: [][]const u8, line: []const u8, sep: u8) !std.StringHashMap([]const u8) {
