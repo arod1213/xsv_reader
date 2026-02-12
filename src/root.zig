@@ -48,7 +48,7 @@ pub const CSVReader = struct {
 
         return .{
             .reader = reader,
-            .headers = try headers.toOwnedSlice(alloc),
+            .headers = headers,
             .config = args,
             .separator = sep,
         };
