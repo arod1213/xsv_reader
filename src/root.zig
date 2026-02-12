@@ -34,9 +34,9 @@ fn parseValue(comptime T: type, val: []const u8) !T {
     if (T == []const u8) {
         return val;
     }
-    return try switch (info) {
-        .int => std.fmt.parseInt(T, val, 10),
-        .float => std.fmt.parseFloat(T, val),
+    switch (info) {
+        .int => return try std.fmt.parseInt(T, val, 10),
+        .float => return try std.fmt.parseFloat(T, val),
         .bool => if (std.ascii.eqlIgnoreCase("true", val)) true else if (std.ascii.eqlIgnoreCase("false", val)) false else error.InvalidBoolean,
         .optional => |opt| {
             if (std.ascii.eqlIgnoreCase("null", val) or val.len == 0) {
@@ -44,14 +44,27 @@ fn parseValue(comptime T: type, val: []const u8) !T {
             }
             return try parseValue(opt.child, val);
         },
+        .array => |arr| {
+            // TODO: replace [] chars and remove leading spaces
+            var result: T = undefined;
+            var iter = std.mem.splitAny(u8, val, ",");
+            var i: usize = 0;
+            while (iter.next()) |item| : (i += 1) {
+                if (i >= arr.len) return error.TooManyElements;
 
+                std.log.info("parsing value {s}", .{item});
+                result[i] = try parseValue(arr.child, item);
+            }
+            if (i != arr.len) return error.TooFewElements;
+            return result;
+        },
         .@"enum" => {
             const enum_val = std.meta.stringToEnum(T, val) orelse return error.InvalidEnumValue;
             return enum_val;
         },
         // TODO: implement more types here
         else => unreachable,
-    };
+    }
 }
 
 fn defaultOrErr(comptime T: type, field: StructField) !T {
@@ -59,6 +72,7 @@ fn defaultOrErr(comptime T: type, field: StructField) !T {
         const cast_val: *const field.type = @ptrCast(default);
         return cast_val.*;
     } else {
+        std.log.err("failed to find {s}", .{field.name});
         return error.MissingField;
     }
 }

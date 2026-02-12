@@ -8,8 +8,6 @@ pub const Society = enum {
     Other,
 };
 
-// 7149
-// 3538
 pub const Custom = struct {
     amount_received: f32,
     society: Society = .Other,
@@ -45,7 +43,6 @@ pub fn main() !void {
     defer list.deinit(alloc);
 
     const source_name = .ASCAP;
-    // const source_name = .@"Mechanical Licensing Collective";
     const period = "2025 Q3";
 
     while (true) {
